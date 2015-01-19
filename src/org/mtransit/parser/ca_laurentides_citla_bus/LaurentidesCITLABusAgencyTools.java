@@ -1,5 +1,6 @@
 package org.mtransit.parser.ca_laurentides_citla_bus;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mtransit.parser.DefaultAgencyTools;
@@ -136,13 +137,40 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public int getStopId(GStop gStop) {
-		return Integer.valueOf(gStop.stop_code); // using stop code as stop ID
+	public String getStopCode(GStop gStop) {
+		if ("0".equals(gStop.stop_code)) {
+			return null;
+		}
+		return super.getStopCode(gStop);
 	}
 
+	private static final Pattern DIGITS = Pattern.compile("[\\d]+");
+
 	@Override
-	public String getStopCode(GStop gStop) {
-		return gStop.stop_id; // using stop ID as stop code
+	public int getStopId(GStop gStop) {
+		String stopCode = getStopCode(gStop);
+		if (stopCode != null && stopCode.length() > 0) {
+			return Integer.valueOf(stopCode); // using stop code as stop ID
+		}
+		// generating integer stop ID
+		Matcher matcher = DIGITS.matcher(gStop.stop_id);
+		matcher.find();
+		int digits = Integer.parseInt(matcher.group());
+		int stopId;
+		if (gStop.stop_id.startsWith("BLA")) {
+			stopId = 100000;
+		} else {
+			System.out.println("Stop doesn't have an ID (start with)! " + gStop);
+			System.exit(-1);
+			stopId = -1;
+		}
+		if (gStop.stop_id.endsWith("C")) {
+			stopId += 3000;
+		} else {
+			System.out.println("Stop doesn't have an ID (end with)! " + gStop);
+			System.exit(-1);
+		}
+		return stopId + digits;
 	}
 
 }
