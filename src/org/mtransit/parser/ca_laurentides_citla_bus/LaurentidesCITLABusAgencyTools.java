@@ -1,18 +1,14 @@
 package org.mtransit.parser.ca_laurentides_citla_bus;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.mtransit.parser.DefaultAgencyTools;
 import org.mtransit.parser.Utils;
-import org.mtransit.parser.gtfs.GReader;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
-import org.mtransit.parser.gtfs.data.GSpec;
 import org.mtransit.parser.gtfs.data.GStop;
 import org.mtransit.parser.gtfs.data.GTrip;
 import org.mtransit.parser.mt.data.MRoute;
@@ -35,55 +31,22 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		new LaurentidesCITLABusAgencyTools().start(args);
 	}
 
+	private HashSet<String> serviceIds;
+
 	@Override
 	public void start(String[] args) {
 		System.out.printf("Generating CITLA bus data...\n");
 		long start = System.currentTimeMillis();
-		extractUsefulServiceIds(args);
+		this.serviceIds = extractUsefulServiceIds(args, this);
 		super.start(args);
 		System.out.printf("Generating CITLA bus data... DONE in %s.\n", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
-	private HashSet<String> serviceIds;
-
-	private void extractUsefulServiceIds(String[] args) {
-		System.out.printf("Extracting useful service IDs...\n");
-		GSpec gtfs = GReader.readGtfsZipFile(args[0], this);
-		Integer startDate = null;
-		Integer endDate = null;
-		Integer todayStringInt = Integer.valueOf(new SimpleDateFormat("yyyyMMdd").format(new Date()));
-		for (GCalendar gCalendar : gtfs.calendars) {
-			if (gCalendar.start_date <= todayStringInt && gCalendar.end_date >= todayStringInt) {
-				if (startDate == null || gCalendar.start_date < startDate) {
-					startDate = gCalendar.start_date;
-				}
-				if (endDate == null || gCalendar.end_date > endDate) {
-					endDate = gCalendar.end_date;
-				}
-			}
-		}
-		System.out.println("Generated on " + todayStringInt + " | Schedules from " + startDate + " to " + endDate);
-		this.serviceIds = new HashSet<String>();
-		for (GCalendar gCalendar : gtfs.calendars) {
-			if ((gCalendar.start_date >= startDate && gCalendar.start_date <= endDate) //
-					|| (gCalendar.end_date >= startDate && gCalendar.end_date <= endDate)) {
-				this.serviceIds.add(gCalendar.service_id);
-			}
-		}
-		for (GCalendarDate gCalendarDate : gtfs.calendarDates) {
-			if (gCalendarDate.date >= startDate && gCalendarDate.date <= endDate) {
-				this.serviceIds.add(gCalendarDate.service_id);
-			}
-		}
-		System.out.println("Service IDs: " + this.serviceIds);
-		gtfs = null;
-		System.out.printf("Extracting useful service IDs... DONE\n");
-	}
 
 	@Override
 	public boolean excludeCalendar(GCalendar gCalendar) {
 		if (this.serviceIds != null) {
-			return !this.serviceIds.contains(gCalendar.service_id);
+			return excludeUselessCalendar(gCalendar, this.serviceIds);
 		}
 		return super.excludeCalendar(gCalendar);
 	}
@@ -91,7 +54,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public boolean excludeCalendarDate(GCalendarDate gCalendarDates) {
 		if (this.serviceIds != null) {
-			return !this.serviceIds.contains(gCalendarDates.service_id);
+			return excludeUselessCalendarDate(gCalendarDates, this.serviceIds);
 		}
 		return super.excludeCalendarDate(gCalendarDates);
 	}
@@ -99,7 +62,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public boolean excludeTrip(GTrip gTrip) {
 		if (this.serviceIds != null) {
-			return !this.serviceIds.contains(gTrip.service_id);
+			return excludeUselessTrip(gTrip, serviceIds);
 		}
 		return super.excludeTrip(gTrip);
 	}
