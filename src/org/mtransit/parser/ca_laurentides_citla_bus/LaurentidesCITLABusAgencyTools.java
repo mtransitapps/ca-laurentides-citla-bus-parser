@@ -103,11 +103,11 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return MSpec.cleanLabel(routeLongName);
 	}
 
-	private static final String ROUTE_COLOR = "005984";
+	private static final String AGENCY_COLOR = "005984";
 
 	@Override
-	public String getRouteColor(GRoute gRoute) {
-		return ROUTE_COLOR;
+	public String getAgencyColor() {
+		return AGENCY_COLOR;
 	}
 
 	@Override
