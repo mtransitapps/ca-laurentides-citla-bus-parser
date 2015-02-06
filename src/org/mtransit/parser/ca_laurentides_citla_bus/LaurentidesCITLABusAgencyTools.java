@@ -42,7 +42,6 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		System.out.printf("Generating CITLA bus data... DONE in %s.\n", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
-
 	@Override
 	public boolean excludeCalendar(GCalendar gCalendar) {
 		if (this.serviceIds != null) {
@@ -109,13 +108,6 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public String getRouteColor(GRoute gRoute) {
 		return ROUTE_COLOR;
-	}
-
-	private static final String ROUTE_TEXT_COLOR = "FFFFFF";
-
-	@Override
-	public String getRouteTextColor(GRoute gRoute) {
-		return ROUTE_TEXT_COLOR;
 	}
 
 	@Override
