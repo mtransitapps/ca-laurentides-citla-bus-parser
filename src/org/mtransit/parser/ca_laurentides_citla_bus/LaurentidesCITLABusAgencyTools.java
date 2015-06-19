@@ -123,8 +123,6 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return MSpec.cleanLabelFR(tripHeadsign);
 	}
 
-	private static final Pattern STATION_DE_METRO = Pattern.compile("(station de métro )", Pattern.CASE_INSENSITIVE);
-	private static final String STATION_DE_METRO_REPLACEMENT = "station ";
 
 	private static final Pattern START_WITH_FACE_A = Pattern.compile("^(face à )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final Pattern START_WITH_FACE_AU = Pattern.compile("^(face au )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -138,25 +136,20 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	private static final Pattern[] SPACE_FACES = new Pattern[] { SPACE_FACE_A, SPACE_WITH_FACE_AU, SPACE_WITH_FACE };
 
-	private static final Pattern AVENUE = Pattern.compile("( avenue)", Pattern.CASE_INSENSITIVE);
-	private static final String AVENUE_REPLACEMENT = " av.";
-
-	private static final Pattern BOULEVARD = Pattern.compile("( boulevard)", Pattern.CASE_INSENSITIVE);
-	private static final String BOULEVARD_REPLACEMENT = " boul.";
 
 	@Override
 	public String cleanStopName(String gStopName) {
-		gStopName = STATION_DE_METRO.matcher(gStopName).replaceAll(STATION_DE_METRO_REPLACEMENT);
-		gStopName = AVENUE.matcher(gStopName).replaceAll(AVENUE_REPLACEMENT);
-		gStopName = BOULEVARD.matcher(gStopName).replaceAll(BOULEVARD_REPLACEMENT);
 		gStopName = Utils.replaceAll(gStopName, START_WITH_FACES, MSpec.SPACE);
 		gStopName = Utils.replaceAll(gStopName, SPACE_FACES, MSpec.SPACE);
+		gStopName = MSpec.cleanStreetTypesFRCA(gStopName);
 		return super.cleanStopNameFR(gStopName);
 	}
 
+	private static final String ZERO = "0";
+
 	@Override
 	public String getStopCode(GStop gStop) {
-		if ("0".equals(gStop.stop_code)) {
+		if (ZERO.equals(gStop.stop_code)) {
 			return null;
 		}
 		return super.getStopCode(gStop);
