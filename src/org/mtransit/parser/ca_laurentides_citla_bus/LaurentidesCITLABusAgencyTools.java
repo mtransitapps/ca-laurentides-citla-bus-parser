@@ -88,7 +88,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String getRouteLongName(GRoute gRoute) {
-		String routeLongName = gRoute.route_long_name;
+		String routeLongName = gRoute.getRouteLongName();
 		routeLongName = CleanUtils.SAINT.matcher(routeLongName).replaceAll(CleanUtils.SAINT_REPLACEMENT);
 		routeLongName = CleanUtils.POINT.matcher(routeLongName).replaceAll(CleanUtils.POINT_REPLACEMENT);
 		routeLongName = CleanUtils.ET.matcher(routeLongName).replaceAll(CleanUtils.ET_REPLACEMENT);
@@ -109,7 +109,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
-		mTrip.setHeadsignString(cleanTripHeadsign(gTrip.trip_headsign), gTrip.direction_id);
+		mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), gTrip.getDirectionId());
 	}
 
 	private static final Pattern DIRECTION = Pattern.compile("(direction )", Pattern.CASE_INSENSITIVE);
@@ -149,7 +149,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String getStopCode(GStop gStop) {
-		if (ZERO.equals(gStop.stop_code)) {
+		if (ZERO.equals(gStop.getStopCode())) {
 			return null;
 		}
 		return super.getStopCode(gStop);
@@ -164,18 +164,18 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			return Integer.valueOf(stopCode); // using stop code as stop ID
 		}
 		// generating integer stop ID
-		Matcher matcher = DIGITS.matcher(gStop.stop_id);
+		Matcher matcher = DIGITS.matcher(gStop.getStopId());
 		matcher.find();
 		int digits = Integer.parseInt(matcher.group());
 		int stopId;
-		if (gStop.stop_id.startsWith("BLA")) {
+		if (gStop.getStopId().startsWith("BLA")) {
 			stopId = 100000;
 		} else {
 			System.out.println("Stop doesn't have an ID (start with)! " + gStop);
 			System.exit(-1);
 			stopId = -1;
 		}
-		if (gStop.stop_id.endsWith("C")) {
+		if (gStop.getStopId().endsWith("C")) {
 			stopId += 3000;
 		} else {
 			System.out.println("Stop doesn't have an ID (end with)! " + gStop);
@@ -183,5 +183,4 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		}
 		return stopId + digits;
 	}
-
 }
