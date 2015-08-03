@@ -71,6 +71,14 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return MAgency.ROUTE_TYPE_BUS;
 	}
 
+	@Override
+	public long getRouteId(GRoute gRoute) {
+		if (!Utils.isDigitsOnly(gRoute.getRouteId())) {
+			return Long.parseLong(gRoute.getRouteShortName());
+		}
+		return super.getRouteId(gRoute);
+	}
+
 	private static final Pattern P1METRO = Pattern.compile("(\\(métro )", Pattern.CASE_INSENSITIVE);
 	private static final String P1METRO_REPLACEMENT = "\\(";
 
