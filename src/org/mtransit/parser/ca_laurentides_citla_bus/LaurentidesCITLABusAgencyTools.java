@@ -150,7 +150,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		gStopName = Utils.replaceAll(gStopName, START_WITH_FACES, CleanUtils.SPACE);
 		gStopName = Utils.replaceAll(gStopName, SPACE_FACES, CleanUtils.SPACE);
 		gStopName = CleanUtils.cleanStreetTypesFRCA(gStopName);
-		return super.cleanStopNameFR(gStopName);
+		return CleanUtils.cleanLabelFR(gStopName);
 	}
 
 	private static final String ZERO = "0";
