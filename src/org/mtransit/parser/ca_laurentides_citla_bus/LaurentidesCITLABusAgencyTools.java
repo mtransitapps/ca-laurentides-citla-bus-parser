@@ -181,8 +181,10 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			stopId = 200000;
 		} else if (gStop.getStopId().startsWith("SJM")) {
 			stopId = 300000;
+		} else if (gStop.getStopId().startsWith("ROS")) {
+			stopId = 400000;
 		} else {
-			System.out.println("Stop doesn't have an ID (start with)! " + gStop);
+			System.out.printf("\nStop doesn't have an ID (start with) %s!\n", gStop);
 			System.exit(-1);
 			stopId = -1;
 		}
@@ -193,7 +195,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		} else if (gStop.getStopId().endsWith("D")) {
 			stopId += 4000;
 		} else {
-			System.out.println("Stop doesn't have an ID (end with)! " + gStop);
+			System.out.printf("\nStop doesn't have an ID (end with) %s!\n", gStop);
 			System.exit(-1);
 		}
 		return stopId + digits;
