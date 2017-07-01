@@ -17,8 +17,8 @@ import org.mtransit.parser.mt.data.MRoute;
 import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.mt.data.MTrip;
 
-// http://www.amt.qc.ca/developers/
-// http://www.amt.qc.ca/xdata/citla/google_transit.zip
+// https://rtm.quebec/en/about/open-data
+// https://rtm.quebec/xdata/citla/google_transit.zip
 public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	public static void main(String[] args) {
