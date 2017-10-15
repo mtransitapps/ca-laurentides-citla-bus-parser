@@ -122,11 +122,8 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public boolean mergeHeadsign(MTrip mTrip, MTrip mTripToMerge) {
-		if (mTrip.getRouteId() == 88l) {
-			if (mTrip.getHeadsignId() == 1) {
-				mTrip.setHeadsignString("St-Eustache", mTrip.getHeadsignId());
-				return true;
-			}
+		if (isGoodEnoughAccepted()) {
+			return super.mergeHeadsign(mTrip, mTripToMerge);
 		}
 		System.out.printf("\nUnexpected trips to merge %s & %s!\n", mTrip, mTripToMerge);
 		System.exit(-1);
@@ -144,7 +141,6 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return CleanUtils.cleanLabelFR(tripHeadsign);
 	}
 
-
 	private static final Pattern START_WITH_FACE_A = Pattern.compile("^(face à )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final Pattern START_WITH_FACE_AU = Pattern.compile("^(face au )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final Pattern START_WITH_FACE = Pattern.compile("^(face )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
@@ -156,7 +152,6 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	private static final Pattern[] START_WITH_FACES = new Pattern[] { START_WITH_FACE_A, START_WITH_FACE_AU, START_WITH_FACE };
 
 	private static final Pattern[] SPACE_FACES = new Pattern[] { SPACE_FACE_A, SPACE_WITH_FACE_AU, SPACE_WITH_FACE };
-
 
 	@Override
 	public String cleanStopName(String gStopName) {
@@ -185,32 +180,36 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			return Integer.valueOf(stopCode); // using stop code as stop ID
 		}
 		Matcher matcher = DIGITS.matcher(gStop.getStopId());
-		matcher.find();
-		int digits = Integer.parseInt(matcher.group());
-		int stopId;
-		if (gStop.getStopId().startsWith("BLA")) {
-			stopId = 100000;
-		} else if (gStop.getStopId().startsWith("SEU")) {
-			stopId = 200000;
-		} else if (gStop.getStopId().startsWith("SJM")) {
-			stopId = 300000;
-		} else if (gStop.getStopId().startsWith("ROS")) {
-			stopId = 400000;
-		} else {
-			System.out.printf("\nStop doesn't have an ID (start with) %s!\n", gStop);
-			System.exit(-1);
-			stopId = -1;
+		if (matcher.find()) {
+			int digits = Integer.parseInt(matcher.group());
+			int stopId;
+			if (gStop.getStopId().startsWith("BLA")) {
+				stopId = 100000;
+			} else if (gStop.getStopId().startsWith("SEU")) {
+				stopId = 200000;
+			} else if (gStop.getStopId().startsWith("SJM")) {
+				stopId = 300000;
+			} else if (gStop.getStopId().startsWith("ROS")) {
+				stopId = 400000;
+			} else {
+				System.out.printf("\nStop doesn't have an ID (start with) %s!\n", gStop);
+				System.exit(-1);
+				stopId = -1;
+			}
+			if (gStop.getStopId().endsWith("B")) {
+				stopId += 2000;
+			} else if (gStop.getStopId().endsWith("C")) {
+				stopId += 3000;
+			} else if (gStop.getStopId().endsWith("D")) {
+				stopId += 4000;
+			} else {
+				System.out.printf("\nStop doesn't have an ID (end with) %s!\n", gStop);
+				System.exit(-1);
+			}
+			return stopId + digits;
 		}
-		if (gStop.getStopId().endsWith("B")) {
-			stopId += 2000;
-		} else if (gStop.getStopId().endsWith("C")) {
-			stopId += 3000;
-		} else if (gStop.getStopId().endsWith("D")) {
-			stopId += 4000;
-		} else {
-			System.out.printf("\nStop doesn't have an ID (end with) %s!\n", gStop);
-			System.exit(-1);
-		}
-		return stopId + digits;
+		System.out.printf("\nUnexpected stop ID for %s!\n", gStop);
+		System.exit(-1);
+		return -1;
 	}
 }
