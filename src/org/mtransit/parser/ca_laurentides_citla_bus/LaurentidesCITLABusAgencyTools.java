@@ -1,20 +1,30 @@
 package org.mtransit.parser.ca_laurentides_citla_bus;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mtransit.parser.DefaultAgencyTools;
+import org.mtransit.parser.Pair;
+import org.mtransit.parser.SplitUtils;
 import org.mtransit.parser.Utils;
+import org.mtransit.parser.SplitUtils.RouteTripSpec;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
 import org.mtransit.parser.gtfs.data.GSpec;
 import org.mtransit.parser.gtfs.data.GStop;
 import org.mtransit.parser.gtfs.data.GTrip;
+import org.mtransit.parser.gtfs.data.GTripStop;
 import org.mtransit.parser.mt.data.MAgency;
 import org.mtransit.parser.mt.data.MRoute;
+import org.mtransit.parser.mt.data.MTripStop;
 import org.mtransit.parser.CleanUtils;
 import org.mtransit.parser.mt.data.MTrip;
 
@@ -116,15 +126,107 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return AGENCY_COLOR;
 	}
 
+	private static HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
+	static {
+		HashMap<Long, RouteTripSpec> map2 = new HashMap<Long, RouteTripSpec>();
+		map2.put(400L, new RouteTripSpec(400L, //
+				0, MTrip.HEADSIGN_TYPE_STRING, "Montmorency", //
+				1, MTrip.HEADSIGN_TYPE_STRING, "Deux-Montagnes") // Grand-Moulin
+				.addTripSort(0, //
+						Arrays.asList(new String[] { //
+						"80202", // Gare Grand-Moulin
+								"82127", // Station Montmorency
+						})) //
+				.addTripSort(1, //
+						Arrays.asList(new String[] { //
+						"82127", // Station Montmorency
+								"80202", // Gare Grand-Moulin
+						})) //
+				.compileBothTripSort());
+		ALL_ROUTE_TRIPS2 = map2;
+	}
+
+	@Override
+	public int compareEarly(long routeId, List<MTripStop> list1, List<MTripStop> list2, MTripStop ts1, MTripStop ts2, GStop ts1GStop, GStop ts2GStop) {
+		if (ALL_ROUTE_TRIPS2.containsKey(routeId)) {
+			return ALL_ROUTE_TRIPS2.get(routeId).compare(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop, this);
+		}
+		return super.compareEarly(routeId, list1, list2, ts1, ts2, ts1GStop, ts2GStop);
+	}
+
+	@Override
+	public ArrayList<MTrip> splitTrip(MRoute mRoute, GTrip gTrip, GSpec gtfs) {
+		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
+			return ALL_ROUTE_TRIPS2.get(mRoute.getId()).getAllTrips();
+		}
+		return super.splitTrip(mRoute, gTrip, gtfs);
+	}
+
+	@Override
+	public Pair<Long[], Integer[]> splitTripStop(MRoute mRoute, GTrip gTrip, GTripStop gTripStop, ArrayList<MTrip> splitTrips, GSpec routeGTFS) {
+		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
+			return SplitUtils.splitTripStop(mRoute, gTrip, gTripStop, routeGTFS, ALL_ROUTE_TRIPS2.get(mRoute.getId()), this);
+		}
+		return super.splitTripStop(mRoute, gTrip, gTripStop, splitTrips, routeGTFS);
+	}
+
 	@Override
 	public void setTripHeadsign(MRoute mRoute, MTrip mTrip, GTrip gTrip, GSpec gtfs) {
+		if (ALL_ROUTE_TRIPS2.containsKey(mRoute.getId())) {
+			return; // split
+		}
 		mTrip.setHeadsignString(cleanTripHeadsign(gTrip.getTripHeadsign()), gTrip.getDirectionId());
 	}
 
 	@Override
 	public boolean mergeHeadsign(MTrip mTrip, MTrip mTripToMerge) {
-		if (isGoodEnoughAccepted()) {
-			return super.mergeHeadsign(mTrip, mTripToMerge);
+		List<String> headsignsValues = Arrays.asList(mTrip.getHeadsignValue(), mTripToMerge.getHeadsignValue());
+		if (mTrip.getRouteId() == 8L) {
+			if (Arrays.asList( //
+					"Terminus / St-Eustache" + " Via Le Carrefour", //
+					"Terminus / St-Eustache" //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString("Terminus / St-Eustache", mTrip.getHeadsignId());
+				return true;
+			} else if (Arrays.asList( //
+					"Métro / Montmorency" + " Via Le Carrefour", //
+					"Métro / Montmorency" //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString("Métro / Montmorency", mTrip.getHeadsignId());
+				return true;
+			}
+		} else if (mTrip.getRouteId() == 9L) {
+			if (Arrays.asList( //
+					"Lafontaine / Via Gare " + "St-Jérôme", //
+					"St-Jérôme" //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString("St-Jérôme", mTrip.getHeadsignId());
+				return true;
+			}
+		} else if (mTrip.getRouteId() == 12L) {
+			if (Arrays.asList( //
+					"Gare Rosemère", //
+					"Laval" //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString("Laval", mTrip.getHeadsignId());
+				return true;
+			}
+		} else if (mTrip.getRouteId() == 80L) {
+			if (Arrays.asList( //
+					"Pointe-Calumet / Via 59e Avenue", //
+					"Terminus / St-Eustache" //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString("Terminus / St-Eustache", mTrip.getHeadsignId());
+				return true;
+			}
+		} else if (mTrip.getRouteId() == 88L) {
+			if (Arrays.asList( //
+					"Express / " + "Terminus / St-Eustache", //
+					"Terminus / St-Eustache" //
+			).containsAll(headsignsValues)) {
+				mTrip.setHeadsignString("Terminus / St-Eustache", mTrip.getHeadsignId());
+				return true;
+			}
 		}
 		System.out.printf("\nUnexpected trips to merge %s & %s!\n", mTrip, mTripToMerge);
 		System.exit(-1);
@@ -136,6 +238,9 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public String cleanTripHeadsign(String tripHeadsign) {
+		if (Utils.isUppercaseOnly(tripHeadsign, true, true)) {
+			tripHeadsign = tripHeadsign.toLowerCase(Locale.FRENCH);
+		}
 		tripHeadsign = DIRECTION.matcher(tripHeadsign).replaceAll(StringUtils.EMPTY);
 		tripHeadsign = EXPRESS_.matcher(tripHeadsign).replaceAll(StringUtils.EMPTY);
 		tripHeadsign = SECTEUR.matcher(tripHeadsign).replaceAll(SECTEUR_REPLACEMENT);
