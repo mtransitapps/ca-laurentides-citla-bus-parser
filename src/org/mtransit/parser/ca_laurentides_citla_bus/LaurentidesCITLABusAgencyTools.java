@@ -134,13 +134,13 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 				1, MTrip.HEADSIGN_TYPE_STRING, "Deux-Montagnes") // Grand-Moulin
 				.addTripSort(0, //
 						Arrays.asList(new String[] { //
-						"80202", // Gare Grand-Moulin
-								"82127", // Station Montmorency
+						"80202", // "80202", // Gare Grand-Moulin
+								"82127", // "82127", // Station Montmorency
 						})) //
 				.addTripSort(1, //
 						Arrays.asList(new String[] { //
-						"82127", // Station Montmorency
-								"80202", // Gare Grand-Moulin
+						"82127", // "82127", // Station Montmorency
+								"80202", // "80202", // Gare Grand-Moulin
 						})) //
 				.compileBothTripSort());
 		ALL_ROUTE_TRIPS2 = map2;
