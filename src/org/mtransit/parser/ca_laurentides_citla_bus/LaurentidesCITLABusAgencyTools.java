@@ -82,10 +82,23 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return MAgency.ROUTE_TYPE_BUS;
 	}
 
+	private static final String T = "T";
+
+	private static final long RID_STARTS_WITH_T = 20_000L;
+
 	@Override
 	public long getRouteId(GRoute gRoute) {
 		if (!Utils.isDigitsOnly(gRoute.getRouteId())) {
-			return Long.parseLong(gRoute.getRouteShortName());
+			Matcher matcher = DIGITS.matcher(gRoute.getRouteShortName());
+			if (matcher.find()) {
+				int digits = Integer.parseInt(matcher.group());
+				if (gRoute.getRouteShortName().startsWith(T)) {
+					return RID_STARTS_WITH_T + digits;
+				}
+			}
+			System.out.printf("\nUnexpected route ID for %s!\n", gRoute);
+			System.exit(-1);
+			return -1L;
 		}
 		return super.getRouteId(gRoute);
 	}
