@@ -201,13 +201,13 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		List<String> headsignsValues = Arrays.asList(mTrip.getHeadsignValue(), mTripToMerge.getHeadsignValue());
 		if (mTrip.getRouteId() == 8L) {
 			if (Arrays.asList( //
-					"Terminus / St-Eustache" + " Via Le Carrefour", //
+					"Terminus / St-Eustache" + " Via Le Carref.", //
 					"Terminus / St-Eustache" //
 			).containsAll(headsignsValues)) {
 				mTrip.setHeadsignString("Terminus / St-Eustache", mTrip.getHeadsignId());
 				return true;
 			} else if (Arrays.asList( //
-					"Métro / Montmorency" + " Via Le Carrefour", //
+					"Métro / Montmorency" + " Via Le Carref.", //
 					"Métro / Montmorency" //
 			).containsAll(headsignsValues)) {
 				mTrip.setHeadsignString("Métro / Montmorency", mTrip.getHeadsignId());
@@ -231,7 +231,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			}
 		} else if (mTrip.getRouteId() == 80L) {
 			if (Arrays.asList( //
-					"Pointe-Calumet / Via 59e Avenue", //
+					"Pointe-Calumet / Via 59e Av.", //
 					"Terminus / St-Eustache" //
 			).containsAll(headsignsValues)) {
 				mTrip.setHeadsignString("Terminus / St-Eustache", mTrip.getHeadsignId());
@@ -263,6 +263,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		tripHeadsign = EXPRESS_.matcher(tripHeadsign).replaceAll(StringUtils.EMPTY);
 		tripHeadsign = SECTEUR.matcher(tripHeadsign).replaceAll(SECTEUR_REPLACEMENT);
 		tripHeadsign = CleanUtils.POINT.matcher(tripHeadsign).replaceAll(CleanUtils.POINT_REPLACEMENT);
+		tripHeadsign = CleanUtils.cleanStreetTypesFRCA(tripHeadsign);
 		return CleanUtils.cleanLabelFR(tripHeadsign);
 	}
 
