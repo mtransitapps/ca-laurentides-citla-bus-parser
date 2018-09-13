@@ -302,7 +302,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public int getStopId(GStop gStop) {
 		String stopCode = getStopCode(gStop);
-		if (stopCode != null && stopCode.length() > 0) {
+		if (stopCode != null && stopCode.length() > 0 & Utils.isDigitsOnly(stopCode)) {
 			return Integer.valueOf(stopCode); // using stop code as stop ID
 		}
 		Matcher matcher = DIGITS.matcher(gStop.getStopId());
@@ -310,19 +310,23 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			int digits = Integer.parseInt(matcher.group());
 			int stopId;
 			if (gStop.getStopId().startsWith("BLA")) {
-				stopId = 100000;
+				stopId = 100_000;
 			} else if (gStop.getStopId().startsWith("SEU")) {
-				stopId = 200000;
+				stopId = 200_000;
 			} else if (gStop.getStopId().startsWith("SJM")) {
-				stopId = 300000;
+				stopId = 300_000;
 			} else if (gStop.getStopId().startsWith("ROS")) {
-				stopId = 400000;
+				stopId = 400_000;
+			} else if (gStop.getStopId().startsWith("TER")) {
+				stopId = 500_000;
 			} else {
 				System.out.printf("\nStop doesn't have an ID (start with) %s!\n", gStop);
 				System.exit(-1);
 				stopId = -1;
 			}
-			if (gStop.getStopId().endsWith("B")) {
+			if (gStop.getStopId().endsWith("A")) {
+				stopId += 1000;
+			} else if (gStop.getStopId().endsWith("B")) {
 				stopId += 2000;
 			} else if (gStop.getStopId().endsWith("C")) {
 				stopId += 3000;
