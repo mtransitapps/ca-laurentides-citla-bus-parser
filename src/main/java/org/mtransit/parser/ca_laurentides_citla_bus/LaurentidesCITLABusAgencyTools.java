@@ -11,6 +11,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.mtransit.parser.DefaultAgencyTools;
+import org.mtransit.parser.MTLog;
 import org.mtransit.parser.Pair;
 import org.mtransit.parser.SplitUtils;
 import org.mtransit.parser.Utils;
@@ -46,11 +47,11 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	@Override
 	public void start(String[] args) {
-		System.out.printf("\nGenerating CITLA bus data...");
+		MTLog.log("Generating CITLA bus data...");
 		long start = System.currentTimeMillis();
 		this.serviceIds = extractUsefulServiceIds(args, this);
 		super.start(args);
-		System.out.printf("\nGenerating CITLA bus data... DONE in %s.\n", Utils.getPrettyDuration(System.currentTimeMillis() - start));
+		MTLog.log("Generating CITLA bus data... DONE in %s.", Utils.getPrettyDuration(System.currentTimeMillis() - start));
 	}
 
 	@Override
@@ -101,14 +102,12 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 					return RID_STARTS_WITH_T + digits;
 				}
 			}
-			System.out.printf("\nUnexpected route ID for %s!\n", gRoute);
-			System.exit(-1);
-			return -1L;
+			throw new MTLog.Fatal("Unexpected route ID for %s!", gRoute.toStringPlus());
 		}
 		return super.getRouteId(gRoute);
 	}
 
-	private static final Pattern P1METRO = Pattern.compile("(\\(métro )", Pattern.CASE_INSENSITIVE);
+	private static final Pattern P1METRO = Pattern.compile("(\\(métro )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
 	private static final String P1METRO_REPLACEMENT = "\\(";
 
 	private static final Pattern SECTEUR = Pattern.compile("(secteur[s]? )", Pattern.CASE_INSENSITIVE);
@@ -146,20 +145,20 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	private static HashMap<Long, RouteTripSpec> ALL_ROUTE_TRIPS2;
 	static {
-		HashMap<Long, RouteTripSpec> map2 = new HashMap<Long, RouteTripSpec>();
-		map2.put(400L, new RouteTripSpec(400L, //
-				0, MTrip.HEADSIGN_TYPE_STRING, "Montmorency", //
-				1, MTrip.HEADSIGN_TYPE_STRING, "Deux-Montagnes") // Grand-Moulin
+		HashMap<Long, RouteTripSpec> map2 = new HashMap<>();
+		map2.put(103L, new RouteTripSpec(103L, // BECAUSE same trip head-sign for 2 directions
+				0, MTrip.HEADSIGN_TYPE_STRING, "Méga Centre / Carref. Du Nord", //
+				1, MTrip.HEADSIGN_TYPE_STRING, "Gare St-Jérôme") //
 				.addTripSort(0, //
-						Arrays.asList(new String[] { //
-						"80202", // "80202", // Gare Grand-Moulin
-								"82127", // "82127", // Station Montmorency
-						})) //
+						Arrays.asList( //
+						"80501", // Gare Saint-Jérôme
+								"80593" // Carrefour du Nord
+						)) //
 				.addTripSort(1, //
-						Arrays.asList(new String[] { //
-						"82127", // "82127", // Station Montmorency
-								"80202", // "80202", // Gare Grand-Moulin
-						})) //
+						Arrays.asList( //
+						"80593", // Carrefour du Nord
+								"80501" // Gare Saint-Jérôme
+						)) //
 				.compileBothTripSort());
 		ALL_ROUTE_TRIPS2 = map2;
 	}
@@ -246,9 +245,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 				return true;
 			}
 		}
-		System.out.printf("\nUnexpected trips to merge %s & %s!\n", mTrip, mTripToMerge);
-		System.exit(-1);
-		return false;
+		throw new MTLog.Fatal("Unexpected trips to merge %s & %s!", mTrip, mTripToMerge);
 	}
 
 	private static final Pattern DIRECTION = Pattern.compile("(direction )", Pattern.CASE_INSENSITIVE);
@@ -302,7 +299,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public int getStopId(GStop gStop) {
 		String stopCode = getStopCode(gStop);
-		if (stopCode != null && stopCode.length() > 0 & Utils.isDigitsOnly(stopCode)) {
+		if (stopCode != null && stopCode.length() > 0 && Utils.isDigitsOnly(stopCode)) {
 			return Integer.valueOf(stopCode); // using stop code as stop ID
 		}
 		Matcher matcher = DIGITS.matcher(gStop.getStopId());
@@ -320,9 +317,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			} else if (gStop.getStopId().startsWith("TER")) {
 				stopId = 500_000;
 			} else {
-				System.out.printf("\nStop doesn't have an ID (start with) %s!\n", gStop);
-				System.exit(-1);
-				stopId = -1;
+				throw new MTLog.Fatal("Stop doesn't have an ID (start with) %s!", gStop);
 			}
 			if (gStop.getStopId().endsWith("A")) {
 				stopId += 1000;
@@ -333,13 +328,10 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			} else if (gStop.getStopId().endsWith("D")) {
 				stopId += 4000;
 			} else {
-				System.out.printf("\nStop doesn't have an ID (end with) %s!\n", gStop);
-				System.exit(-1);
+				throw new MTLog.Fatal("Stop doesn't have an ID (end with) %s!", gStop);
 			}
 			return stopId + digits;
 		}
-		System.out.printf("\nUnexpected stop ID for %s!\n", gStop);
-		System.exit(-1);
-		return -1;
+		throw new MTLog.Fatal("Unexpected stop ID for %s!", gStop);
 	}
 }
