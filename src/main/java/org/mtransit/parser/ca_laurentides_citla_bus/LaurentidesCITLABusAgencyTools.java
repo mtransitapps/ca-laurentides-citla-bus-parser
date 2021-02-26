@@ -2,78 +2,41 @@ package org.mtransit.parser.ca_laurentides_citla_bus;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.mtransit.parser.CleanUtils;
+import org.mtransit.commons.CleanUtils;
+import org.mtransit.commons.StringUtils;
 import org.mtransit.parser.DefaultAgencyTools;
 import org.mtransit.parser.MTLog;
-import org.mtransit.parser.StringUtils;
 import org.mtransit.parser.Utils;
 import org.mtransit.parser.gtfs.data.GCalendar;
 import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
-import org.mtransit.parser.gtfs.data.GSpec;
 import org.mtransit.parser.gtfs.data.GStop;
 import org.mtransit.parser.gtfs.data.GTrip;
 import org.mtransit.parser.mt.data.MAgency;
-import org.mtransit.parser.mt.data.MRoute;
-import org.mtransit.parser.mt.data.MTrip;
 
-import java.util.HashSet;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.mtransit.parser.Constants.EMPTY;
+import static org.mtransit.parser.Constants.SPACE_;
 
 // https://exo.quebec/en/about/open-data
 // https://exo.quebec/xdata/citla/google_transit.zip
 public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
-	public static void main(@Nullable String[] args) {
-		if (args == null || args.length == 0) {
-			args = new String[3];
-			args[0] = "input/gtfs.zip";
-			args[1] = "../../mtransitapps/ca-laurentides-citla-bus-android/res/raw/";
-			args[2] = ""; // files-prefix
-		}
+	public static void main(@NotNull String[] args) {
 		new LaurentidesCITLABusAgencyTools().start(args);
 	}
 
-	@Nullable
-	private HashSet<Integer> serviceIdInts;
-
 	@Override
-	public void start(@NotNull String[] args) {
-		MTLog.log("Generating CITLA bus data...");
-		long start = System.currentTimeMillis();
-		this.serviceIdInts = extractUsefulServiceIdInts(args, this, true);
-		super.start(args);
-		MTLog.log("Generating CITLA bus data... DONE in %s.", Utils.getPrettyDuration(System.currentTimeMillis() - start));
+	public String getAgencyName() {
+		return "exo Laurentides";
 	}
 
 	@Override
-	public boolean excludingAll() {
-		return this.serviceIdInts != null && this.serviceIdInts.isEmpty();
-	}
-
-	@Override
-	public boolean excludeCalendar(@NotNull GCalendar gCalendar) {
-		if (this.serviceIdInts != null) {
-			return excludeUselessCalendarInt(gCalendar, this.serviceIdInts);
-		}
-		return super.excludeCalendar(gCalendar);
-	}
-
-	@Override
-	public boolean excludeCalendarDate(@NotNull GCalendarDate gCalendarDates) {
-		if (this.serviceIdInts != null) {
-			return excludeUselessCalendarDateInt(gCalendarDates, this.serviceIdInts);
-		}
-		return super.excludeCalendarDate(gCalendarDates);
-	}
-
-	@Override
-	public boolean excludeTrip(@NotNull GTrip gTrip) {
-		if (this.serviceIdInts != null) {
-			return excludeUselessTripInt(gTrip, this.serviceIdInts);
-		}
-		return super.excludeTrip(gTrip);
+	public boolean defaultExcludeEnabled() {
+		return true;
 	}
 
 	@NotNull
@@ -90,9 +53,9 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	public long getRouteId(@NotNull GRoute gRoute) {
 		//noinspection deprecation
 		if (!Utils.isDigitsOnly(gRoute.getRouteId())) {
-			Matcher matcher = DIGITS.matcher(gRoute.getRouteShortName());
+			final Matcher matcher = DIGITS.matcher(gRoute.getRouteShortName());
 			if (matcher.find()) {
-				int digits = Integer.parseInt(matcher.group());
+				final int digits = Integer.parseInt(matcher.group());
 				if (gRoute.getRouteShortName().startsWith(T)) {
 					return RID_STARTS_WITH_T + digits;
 				}
@@ -105,9 +68,6 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	private static final Pattern P1METRO = Pattern.compile("(\\(métro )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.CANON_EQ);
 	private static final String P1METRO_REPLACEMENT = "\\(";
 
-	private static final Pattern SECTEUR = Pattern.compile("(secteur[s]? )", Pattern.CASE_INSENSITIVE);
-	private static final String SECTEUR_REPLACEMENT = "";
-
 	private static final Pattern DASH_DES = Pattern.compile("(- de[s]? )", Pattern.CASE_INSENSITIVE);
 	private static final String DASH_DES_REPLACEMENT = "- ";
 
@@ -119,13 +79,11 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	@NotNull
 	@Override
-	public String getRouteLongName(@NotNull GRoute gRoute) {
-		String routeLongName = gRoute.getRouteLongNameOrDefault();
+	public String cleanRouteLongName(@NotNull String routeLongName) {
 		routeLongName = CleanUtils.SAINT.matcher(routeLongName).replaceAll(CleanUtils.SAINT_REPLACEMENT);
 		routeLongName = CleanUtils.POINT.matcher(routeLongName).replaceAll(CleanUtils.POINT_REPLACEMENT);
 		routeLongName = CleanUtils.CLEAN_ET.matcher(routeLongName).replaceAll(CleanUtils.CLEAN_ET_REPLACEMENT);
 		routeLongName = P1METRO.matcher(routeLongName).replaceAll(P1METRO_REPLACEMENT);
-		routeLongName = SECTEUR.matcher(routeLongName).replaceAll(SECTEUR_REPLACEMENT);
 		routeLongName = DASH_DES.matcher(routeLongName).replaceAll(DASH_DES_REPLACEMENT);
 		routeLongName = BOISBRIAND_SUD_VERS_NORD.matcher(routeLongName).replaceAll(BOISBRIAND_SUD_VERS_NORD_REPLACEMENT);
 		routeLongName = BOISBRIAND_NORD_VERS_SUD.matcher(routeLongName).replaceAll(BOISBRIAND_NORD_VERS_SUD_REPLACEMENT);
@@ -141,34 +99,28 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	}
 
 	@Override
-	public void setTripHeadsign(@NotNull MRoute mRoute, @NotNull MTrip mTrip, @NotNull GTrip gTrip, @NotNull GSpec gtfs) {
-		mTrip.setHeadsignString(
-				cleanTripHeadsign(gTrip.getTripHeadsignOrDefault()),
-				gTrip.getDirectionIdOrDefault()
-		);
-	}
-
-	@Override
 	public boolean directionFinderEnabled() {
 		return true;
 	}
 
-	@Override
-	public boolean mergeHeadsign(@NotNull MTrip mTrip, @NotNull MTrip mTripToMerge) {
-		throw new MTLog.Fatal("Unexpected trips to merge %s & %s!", mTrip, mTripToMerge);
-	}
-
-	private static final Pattern DIRECTION = Pattern.compile("(direction )", Pattern.CASE_INSENSITIVE);
 	private static final Pattern EXPRESS_ = Pattern.compile("(express )", Pattern.CASE_INSENSITIVE);
+
+	private static final Pattern _DASH_ = Pattern.compile("( - )");
+	private static final String _DASH_REPLACEMENT = "<>"; // form<>to
+
+	private static final Pattern CIVIQUE_ = Pattern.compile("((^|\\W)(" + "civique #?([\\d]+)" + ")(\\W|$))", Pattern.CASE_INSENSITIVE);
+	private static final String CIVIQUE_REPLACEMENT = "$2" + "#$4" + "$5";
 
 	@NotNull
 	@Override
 	public String cleanTripHeadsign(@NotNull String tripHeadsign) {
-		tripHeadsign = DIRECTION.matcher(tripHeadsign).replaceAll(StringUtils.EMPTY);
+		tripHeadsign = _DASH_.matcher(tripHeadsign).replaceAll(_DASH_REPLACEMENT); // from - to => form<>to
 		tripHeadsign = EXPRESS_.matcher(tripHeadsign).replaceAll(StringUtils.EMPTY);
-		tripHeadsign = SECTEUR.matcher(tripHeadsign).replaceAll(SECTEUR_REPLACEMENT);
+		tripHeadsign = CIVIQUE_.matcher(tripHeadsign).replaceAll(CIVIQUE_REPLACEMENT);
+		tripHeadsign = CleanUtils.keepToFR(tripHeadsign);
 		tripHeadsign = CleanUtils.removeVia(tripHeadsign);
 		tripHeadsign = CleanUtils.POINT.matcher(tripHeadsign).replaceAll(CleanUtils.POINT_REPLACEMENT);
+		tripHeadsign = CleanUtils.cleanBounds(Locale.FRENCH, tripHeadsign);
 		tripHeadsign = CleanUtils.cleanStreetTypesFRCA(tripHeadsign);
 		return CleanUtils.cleanLabelFR(tripHeadsign);
 	}
@@ -185,9 +137,14 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	private static final Pattern[] SPACE_FACES = new Pattern[]{SPACE_FACE_A, SPACE_WITH_FACE_AU, SPACE_WITH_FACE};
 
+	private static final Pattern DEVANT_ = CleanUtils.cleanWordsFR("devant");
+
 	@NotNull
 	@Override
 	public String cleanStopName(@NotNull String gStopName) {
+		gStopName = _DASH_.matcher(gStopName).replaceAll(SPACE_);
+		gStopName = DEVANT_.matcher(gStopName).replaceAll(EMPTY);
+		gStopName = CIVIQUE_.matcher(gStopName).replaceAll(CIVIQUE_REPLACEMENT);
 		gStopName = Utils.replaceAll(gStopName, START_WITH_FACES, CleanUtils.SPACE);
 		gStopName = Utils.replaceAll(gStopName, SPACE_FACES, CleanUtils.SPACE);
 		gStopName = CleanUtils.cleanStreetTypesFRCA(gStopName);
@@ -200,7 +157,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	@Override
 	public String getStopCode(@NotNull GStop gStop) {
 		if (ZERO.equals(gStop.getStopCode())) {
-			return StringUtils.EMPTY;
+			return EMPTY;
 		}
 		return super.getStopCode(gStop);
 	}
