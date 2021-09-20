@@ -1,5 +1,7 @@
 package org.mtransit.parser.ca_laurentides_citla_bus;
 
+import static org.mtransit.commons.RegexUtils.DIGITS;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.mtransit.commons.CleanUtils;
@@ -14,12 +16,13 @@ import org.mtransit.parser.gtfs.data.GStop;
 import org.mtransit.parser.gtfs.data.GTrip;
 import org.mtransit.parser.mt.data.MAgency;
 
+import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.mtransit.parser.Constants.EMPTY;
-import static org.mtransit.parser.Constants.SPACE_;
+import static org.mtransit.commons.Constants.EMPTY;
+import static org.mtransit.commons.Constants.SPACE_;
 
 // https://exo.quebec/en/about/open-data
 // https://exo.quebec/xdata/citla/google_transit.zip
@@ -27,6 +30,12 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	public static void main(@NotNull String[] args) {
 		new LaurentidesCITLABusAgencyTools().start(args);
+	}
+
+	@Nullable
+	@Override
+	public List<Locale> getSupportedLanguages() {
+		return LANG_FR;
 	}
 
 	@Override
@@ -45,24 +54,19 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return MAgency.ROUTE_TYPE_BUS;
 	}
 
-	private static final String T = "T";
-
-	private static final long RID_STARTS_WITH_T = 20_000L;
+	@Override
+	public boolean defaultRouteIdEnabled() {
+		return true;
+	}
 
 	@Override
-	public long getRouteId(@NotNull GRoute gRoute) {
-		//noinspection deprecation
-		if (!Utils.isDigitsOnly(gRoute.getRouteId())) {
-			final Matcher matcher = DIGITS.matcher(gRoute.getRouteShortName());
-			if (matcher.find()) {
-				final int digits = Integer.parseInt(matcher.group());
-				if (gRoute.getRouteShortName().startsWith(T)) {
-					return RID_STARTS_WITH_T + digits;
-				}
-			}
-			throw new MTLog.Fatal("Unexpected route ID for %s!", gRoute.toStringPlus());
-		}
-		return super.getRouteId(gRoute);
+	public boolean useRouteShortNameForRouteId() {
+		return true;
+	}
+
+	@Override
+	public boolean defaultRouteLongNameEnabled() {
+		return true;
 	}
 
 	private static final Pattern P1METRO = Pattern.compile("(\\(métro )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.CANON_EQ);
@@ -90,12 +94,9 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return CleanUtils.cleanLabel(routeLongName);
 	}
 
-	private static final String AGENCY_COLOR = "1F1F1F"; // DARK GRAY (from GTFS)
-
-	@NotNull
 	@Override
-	public String getAgencyColor() {
-		return AGENCY_COLOR;
+	public boolean defaultAgencyColorEnabled() {
+		return true;
 	}
 
 	@Override
@@ -161,8 +162,6 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		}
 		return super.getStopCode(gStop);
 	}
-
-	private static final Pattern DIGITS = Pattern.compile("[\\d]+");
 
 	@Override
 	public int getStopId(@NotNull GStop gStop) {
