@@ -170,37 +170,13 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 			return Integer.parseInt(stopCode); // using stop code as stop ID
 		}
 		//noinspection deprecation
-		final String stopId1 = gStop.getStopId();
-		Matcher matcher = DIGITS.matcher(stopId1);
-		if (matcher.find()) {
-			int digits = Integer.parseInt(matcher.group());
-			int stopId;
-			if (stopId1.startsWith("BLA")) {
-				stopId = 100_000;
-			} else if (stopId1.startsWith("SEU")) {
-				stopId = 200_000;
-			} else if (stopId1.startsWith("SJM")) {
-				stopId = 300_000;
-			} else if (stopId1.startsWith("ROS")) {
-				stopId = 400_000;
-			} else if (stopId1.startsWith("TER")) {
-				stopId = 500_000;
-			} else {
-				throw new MTLog.Fatal("Stop doesn't have an ID (start with) %s!", gStop);
-			}
-			if (stopId1.endsWith("A")) {
-				stopId += 1_000;
-			} else if (stopId1.endsWith("B")) {
-				stopId += 2_000;
-			} else if (stopId1.endsWith("C")) {
-				stopId += 3_000;
-			} else if (stopId1.endsWith("D")) {
-				stopId += 4_000;
-			} else {
-				throw new MTLog.Fatal("Stop doesn't have an ID (end with) %s!", gStop);
-			}
-			return stopId + digits;
+		switch (gStop.getStopId()) {
+			case "A19103": return 10_001;
+			case "int501": return 10_002;
+			case "Int506": return 10_003;
+			case "LN04": return 10_004;
+		default:
+			throw new MTLog.Fatal("Unexpected stop ID for %s!", gStop);
 		}
-		throw new MTLog.Fatal("Unexpected stop ID for %s!", gStop);
 	}
 }
