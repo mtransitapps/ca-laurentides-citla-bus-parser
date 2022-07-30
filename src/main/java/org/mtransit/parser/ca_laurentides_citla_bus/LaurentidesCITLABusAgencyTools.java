@@ -25,7 +25,6 @@ import static org.mtransit.commons.Constants.EMPTY;
 import static org.mtransit.commons.Constants.SPACE_;
 
 // https://exo.quebec/en/about/open-data
-// https://exo.quebec/xdata/citla/google_transit.zip
 public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 
 	public static void main(@NotNull String[] args) {
