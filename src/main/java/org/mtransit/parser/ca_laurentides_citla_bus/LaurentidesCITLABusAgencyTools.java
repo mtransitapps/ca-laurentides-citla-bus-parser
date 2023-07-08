@@ -1,28 +1,23 @@
 package org.mtransit.parser.ca_laurentides_citla_bus;
 
-import static org.mtransit.commons.RegexUtils.DIGITS;
+import static org.mtransit.commons.Constants.EMPTY;
+import static org.mtransit.commons.Constants.SPACE_;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.mtransit.commons.CharUtils;
 import org.mtransit.commons.CleanUtils;
 import org.mtransit.commons.StringUtils;
 import org.mtransit.parser.DefaultAgencyTools;
 import org.mtransit.parser.MTLog;
 import org.mtransit.parser.Utils;
-import org.mtransit.parser.gtfs.data.GCalendar;
-import org.mtransit.parser.gtfs.data.GCalendarDate;
 import org.mtransit.parser.gtfs.data.GRoute;
 import org.mtransit.parser.gtfs.data.GStop;
-import org.mtransit.parser.gtfs.data.GTrip;
 import org.mtransit.parser.mt.data.MAgency;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.mtransit.commons.Constants.EMPTY;
-import static org.mtransit.commons.Constants.SPACE_;
 
 // https://exo.quebec/en/about/open-data
 public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
@@ -37,6 +32,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return LANG_FR;
 	}
 
+	@NotNull
 	@Override
 	public String getAgencyName() {
 		return "exo Laurentides";
@@ -63,6 +59,12 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		return true;
 	}
 
+	@NotNull
+	@Override
+	public String getRouteShortName(@NotNull GRoute gRoute) {
+		return gRoute.getRouteShortName(); // used by GTFS-RT
+	}
+
 	@Override
 	public boolean defaultRouteLongNameEnabled() {
 		return true;
@@ -71,7 +73,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	private static final Pattern P1METRO = Pattern.compile("(\\(métro )", Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.CANON_EQ);
 	private static final String P1METRO_REPLACEMENT = "\\(";
 
-	private static final Pattern DASH_DES = Pattern.compile("(- de[s]? )", Pattern.CASE_INSENSITIVE);
+	private static final Pattern DASH_DES = Pattern.compile("(- des? )", Pattern.CASE_INSENSITIVE);
 	private static final String DASH_DES_REPLACEMENT = "- ";
 
 	private static final Pattern BOISBRIAND_SUD_VERS_NORD = Pattern.compile("(Boisbriand Sud Vers Boisbriand Nord)", Pattern.CASE_INSENSITIVE);
@@ -108,7 +110,7 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 	private static final Pattern _DASH_ = Pattern.compile("( - )");
 	private static final String _DASH_REPLACEMENT = "<>"; // form<>to
 
-	private static final Pattern CIVIQUE_ = Pattern.compile("((^|\\W)(" + "civique #?([\\d]+)" + ")(\\W|$))", Pattern.CASE_INSENSITIVE);
+	private static final Pattern CIVIQUE_ = Pattern.compile("((^|\\W)(" + "civique #?(\\d+)" + ")(\\W|$))", Pattern.CASE_INSENSITIVE);
 	private static final String CIVIQUE_REPLACEMENT = "$2" + "#$4" + "$5";
 
 	@NotNull
@@ -145,8 +147,8 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		gStopName = _DASH_.matcher(gStopName).replaceAll(SPACE_);
 		gStopName = DEVANT_.matcher(gStopName).replaceAll(EMPTY);
 		gStopName = CIVIQUE_.matcher(gStopName).replaceAll(CIVIQUE_REPLACEMENT);
-		gStopName = Utils.replaceAll(gStopName, START_WITH_FACES, CleanUtils.SPACE);
-		gStopName = Utils.replaceAll(gStopName, SPACE_FACES, CleanUtils.SPACE);
+		gStopName = Utils.replaceAllNN(gStopName, START_WITH_FACES, CleanUtils.SPACE);
+		gStopName = Utils.replaceAllNN(gStopName, SPACE_FACES, CleanUtils.SPACE);
 		gStopName = CleanUtils.cleanStreetTypesFRCA(gStopName);
 		return CleanUtils.cleanLabelFR(gStopName);
 	}
@@ -159,21 +161,26 @@ public class LaurentidesCITLABusAgencyTools extends DefaultAgencyTools {
 		if (ZERO.equals(gStop.getStopCode())) {
 			return EMPTY;
 		}
-		return super.getStopCode(gStop);
+		//noinspection deprecation
+		return gStop.getStopId(); // used by GTFS-RT
 	}
 
 	@Override
 	public int getStopId(@NotNull GStop gStop) {
 		String stopCode = getStopCode(gStop);
-		if (stopCode.length() > 0 && Utils.isDigitsOnly(stopCode)) {
+		if (stopCode.length() > 0 && CharUtils.isDigitsOnly(stopCode)) {
 			return Integer.parseInt(stopCode); // using stop code as stop ID
 		}
 		//noinspection deprecation
 		switch (gStop.getStopId()) {
-			case "A19103": return 10_001;
-			case "int501": return 10_002;
-			case "Int506": return 10_003;
-			case "LN04": return 10_004;
+		case "A19103":
+			return 10_001;
+		case "int501":
+			return 10_002;
+		case "Int506":
+			return 10_003;
+		case "LN04":
+			return 10_004;
 		default:
 			throw new MTLog.Fatal("Unexpected stop ID for %s!", gStop);
 		}
